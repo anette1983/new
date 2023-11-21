@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { Link, List, ListItem, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import Dialog, { DialogProps } from '@mui/material/Dialog';
@@ -27,7 +28,7 @@ export default function TermsDialog({ SignUpPage }: SignUpProps) {
   const [open, setOpen] = React.useState<boolean>(false);
   const scrollType: DialogProps['scroll'] = 'paper';
   const descriptionElementRef = React.useRef<HTMLElement>(null);
-  
+
   React.useEffect(() => {
     if (open) {
       const { current: descriptionElement } = descriptionElementRef;

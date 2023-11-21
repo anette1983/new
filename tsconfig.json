@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
     "baseUrl": "src",
+    "paths": {
+      "store/*": ["store/*"],
+      "components/*": ["components/*"]
+      // Add other path mappings as needed
+    },
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "strict": true,

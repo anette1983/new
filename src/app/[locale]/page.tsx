@@ -1,21 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { notFound } from 'next/navigation';
-import { Box } from '@mui/material';
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button, Link } from '@mui/material';
 import Typography from '@mui/material/Typography';
-import { Locale } from 'locales/i18n.config';
-import { getDictionary } from 'lib/dictionary';
 import { colors } from 'constants/colors';
 import { pageLinks } from 'constants/pageLinks';
 import { typography } from 'theme/typography';
-import PagesContainer from 'components/PagesContainer/PagesContainer';
 import { LoadingScreen } from 'components/loading-screen';
-
-type Props = {
-  params: { lang: Locale };
-};
+import WelcomePageContainer from 'components/WelcomePageContainer/WelcomePageContainer';
+import { RightSection, StyledBtnWrapper } from 'components/WelcomePageContainer/styles';
 
 type HomePageType = {
   Header: {
@@ -26,47 +20,29 @@ type HomePageType = {
   };
 };
 
-export default function HomePage({ params: { lang } }: Props) {
+export default function HomePage() {
   const [data, setData] = useState<HomePageType | null>(null);
+  const t = useTranslations('Home');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { Home } = await getDictionary(lang);
-        setData(Home);
-      } catch (error) {
-        notFound();
-      }
-    };
-
-    fetchData();
-  }, [lang]);
-
-  if (!data) {
+  if (data) {
     return <LoadingScreen />;
   }
 
   return (
-    <PagesContainer>
-      <Box maxWidth="sm" sx={{ display: 'flex', flexDirection: 'column', flex: '1' }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignSelf: 'flex-end',
-            marginBottom: `calc(50% - 125px)`,
-          }}
-        >
+    <WelcomePageContainer>
+      <RightSection maxWidth="sm">
+        <StyledBtnWrapper>
           <Button variant="contained" sx={{ marginRight: '10px' }} size="large">
             <Link underline={'none'} color={colors.TEST_MAIN_COLOR} href={pageLinks.SIGN_IN_PAGE}>
-              {data.Page.signInLink}
+              {t('Page.signInLink')}
             </Link>
           </Button>
           <Button variant="contained" size="large">
             <Link underline={'none'} color={colors.TEST_MAIN_COLOR} href={pageLinks.SIGN_UP_PAGE}>
-              {data.Page.signUpLink}
+              {t('Page.signUpLink')}
             </Link>
           </Button>
-        </Box>
+        </StyledBtnWrapper>
         <Typography
           variant="h1"
           align="center"
@@ -74,18 +50,17 @@ export default function HomePage({ params: { lang } }: Props) {
           sx={{
             ...typography.h3,
             mx: 'auto',
-            mb: `calc(50% - 125px)`,
           }}
           maxWidth="500px"
         >
-          {data.Page.title}
+          {t('Page.title')}
         </Typography>
         <Button variant="contained" fullWidth size="large">
-          <Link underline={'none'} color={colors.TEST_MAIN_COLOR} href={pageLinks.SIGN_IN_PAGE}>
-            {data.Page.buttonTxt}
+          <Link underline={'none'} color="primary" href={pageLinks.SIGN_IN_PAGE}>
+            {t('Page.buttonTxt')}
           </Link>
         </Button>
-      </Box>
-    </PagesContainer>
+      </RightSection>
+    </WelcomePageContainer>
   );
 }

@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery, BaseQueryFn } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { enqueueSnackbar } from 'notistack';
 
 export interface IUserData {
   email: string;
@@ -20,11 +21,6 @@ interface ILoginResError {
   };
 }
 
-export interface IUserData {
-  email: string;
-  password: string;
-}
-
 interface IUserDataResponse {
   user: {
     email: string;
@@ -32,10 +28,20 @@ interface IUserDataResponse {
   };
 }
 
+interface ISignUpResData {
+  data: {
+    token: string;
+    user: {
+      email: string;
+      id: string;
+    };
+  };
+}
+
 export const authApi = createApi({
   reducerPath: 'auth',
   tagTypes: ['Users'],
-  baseQuery: fetchBaseQuery({ baseUrl: process.env.NEXT_PUBLIC_LOGIN_BASE_URL }),
+  baseQuery: fetchBaseQuery({ baseUrl: process.env.NEXT_PUBLIC_BASE_URL }),
   endpoints: (builder) => ({
     signIn: builder.mutation<ILoginResData['data'], IUserData>({
       query: (body) => ({
@@ -43,14 +49,29 @@ export const authApi = createApi({
         method: 'POST',
         body,
       }),
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+        } catch (err) {
+          enqueueSnackbar('Please enter valid credentials!', {
+            variant: 'error',
+          });
+        }
+      },
       invalidatesTags: [{ type: 'Users' }],
     }),
-    signUp: builder.mutation<IUserDataResponse, IUserData>({
+    signUp: builder.mutation<ISignUpResData['data'], IUserData>({
       query: (body) => ({
         url: 'user',
         method: 'POST',
         body,
       }),
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try {
+        } catch (err) {
+          enqueueSnackbar('User with this email already exists', { variant: 'error' });
+        }
+      },
       invalidatesTags: [{ type: 'Users' }],
     }),
   }),

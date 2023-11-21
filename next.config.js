@@ -1,7 +1,7 @@
 module.exports = {
   trailingSlash: true,
   env: {
-    BASE_URL: process.env.NEXT_PUBLIC_LOGIN_BASE_URL,
+    BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
   },
   modularizeImports: {
     '@mui/material': {
@@ -18,4 +18,12 @@ module.exports = {
     });
     return config;
   },
+  compiler: {
+    styledComponents: true,
+  },
 };
+const withNextIntl = require('next-intl/plugin')();
+
+module.exports = withNextIntl({
+  // Other Next.js configuration ...
+});

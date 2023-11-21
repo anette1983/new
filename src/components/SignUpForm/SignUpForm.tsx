@@ -3,14 +3,19 @@
 import React from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { Button } from '@mui/material';
+import { Box, IconButton, styled } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { Box, IconButton, styled } from '@mui/material';
-import { pageLinks } from 'constants/pageLinks';
+import { useSnackbar } from 'notistack';
 import { useSignUpMutation } from 'store/authApi';
+import { links } from 'constants/links';
+import { SignUpPageType } from 'types/auth';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from 'store';
+import { setCredentials } from 'store/reducers/authReducer';
 
 const StyledTextFiled = styled(TextField)`
   margin-bottom: 1.5 rem;
@@ -22,20 +27,13 @@ type FormValues = {
   repeatPassword: string;
 };
 
-type SignUpPageType = {
-  Main: {
-    [key: string]: string;
-  };
-  TermsContent: {
-    [key: string]: string;
-  };
-};
-
 type SignUpProps = {
-  SignUpPage: SignUpPageType;
+  signUpPage: SignUpPageType;
 };
 
-function SignUpForm({ SignUpPage }: SignUpProps) {
+function SignUpForm({ signUpPage }: SignUpProps) {
+  const { enqueueSnackbar } = useSnackbar();
+  const [signUp, { error }] = useSignUpMutation();
   const form = useForm<FormValues>({
     defaultValues: {
       email: '',
@@ -45,39 +43,50 @@ function SignUpForm({ SignUpPage }: SignUpProps) {
     mode: 'onBlur',
   });
 
-  const [signUp] = useSignUpMutation();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState<boolean>(false);
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const { register, handleSubmit, formState, watch } = form;
-  const { errors } = formState;
+  const { errors, isValid } = formState;
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     const { email, password } = data;
-    const credentials = { email, password };
-    signUp(credentials);
-    // router.push(pageLinks.VERIFY_PAGE);
+    try {
+      const res = await signUp({ email, password });
+      if ('data' in res) {
+        const {
+          token,
+          user: { id, email },
+        } = res.data;
+        dispatch(setCredentials({ id, email, token }));
+        enqueueSnackbar('User added successfully!', { variant: 'success' });
+        router.push(links.VERIFY_PAGE);
+      }
+    } catch (error) {
+      notFound();
+    }
   };
 
   return (
     <Box
       component="form"
-      sx={{ display: 'flex', flexDirection: 'column', width: '70%', gap: '0.9rem' }}
+      sx={{ display: 'flex', flexDirection: 'column', width: '90%', gap: '0.9rem' }}
       onSubmit={handleSubmit(onSubmit)}
       noValidate
       autoComplete="off"
     >
       <StyledTextFiled
         variant="outlined"
-        label={SignUpPage.Main.emailInput}
-        placeholder={SignUpPage.Main.emailInputPlaceholder}
+        label={signUpPage.Main.emailInput}
+        placeholder={signUpPage.Main.emailInputPlaceholder}
         type="email"
         autoFocus
         {...register('email', {
-          required: SignUpPage.Main.emailRequired,
+          required: signUpPage.Main.emailRequired,
           pattern: {
             value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i,
-            message: SignUpPage.Main.emailInvalid,
+            message: signUpPage.Main.emailInvalid,
           },
         })}
         error={!!errors.email}
@@ -85,14 +94,14 @@ function SignUpForm({ SignUpPage }: SignUpProps) {
       />
       <StyledTextFiled
         variant="outlined"
-        label={SignUpPage.Main.passwordInput}
-        placeholder={SignUpPage.Main.minChar}
+        label={signUpPage.Main.passwordInput}
+        placeholder={signUpPage.Main.minChar}
         type={showPassword ? 'text' : 'password'}
         {...register('password', {
-          required: SignUpPage.Main.passwordRequired,
+          required: signUpPage.Main.passwordRequired,
           pattern: {
             value: /^.{8,}$/i,
-            message: SignUpPage.Main.minChar,
+            message: signUpPage.Main.minChar,
           },
         })}
         error={!!errors.password}
@@ -107,12 +116,12 @@ function SignUpForm({ SignUpPage }: SignUpProps) {
       />
       <StyledTextFiled
         variant="outlined"
-        label={SignUpPage.Main.repeatLabel}
-        placeholder={SignUpPage.Main.minChar}
+        label={signUpPage.Main.repeatLabel}
+        placeholder={signUpPage.Main.minChar}
         type={showRepeatPassword ? 'text' : 'password'}
         {...register('repeatPassword', {
-          required: SignUpPage.Main.passwordRequired,
-          validate: (value) => value === watch('password') || SignUpPage.Main.unmatchPass,
+          required: signUpPage.Main.passwordRequired,
+          validate: (value) => value === watch('password') || signUpPage.Main.unmatchPass,
         })}
         error={!!errors.repeatPassword}
         helperText={errors.repeatPassword?.message}
@@ -124,8 +133,8 @@ function SignUpForm({ SignUpPage }: SignUpProps) {
           ),
         }}
       />
-      <Button type="submit" variant="contained" sx={{ my: '20px' }} fullWidth>
-        {SignUpPage.Main.title}
+      <Button type="submit" variant="contained" sx={{ my: '20px' }} fullWidth disabled={!isValid}>
+        {signUpPage.Main.title}
       </Button>
     </Box>
   );
